@@ -85,6 +85,7 @@ const performSearch = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Basic ${btoa(`${import.meta.env.VITE_ELASTIC_USERNAME}:${import.meta.env.VITE_ELASTIC_PASSWORD}`)}`
       },
       body: JSON.stringify({
         query: {
