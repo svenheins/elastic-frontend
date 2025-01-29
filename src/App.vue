@@ -27,89 +27,175 @@
 
     <!-- Results -->
     <div v-if="results.length > 0" class="space-y-6">
-      <table class="min-w-full bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
-        <thead>
-          <tr>
-            <th 
-              v-for="header in tableHeaders" 
-              :key="header.key"
-              @click="sortBy(header.key)"
-              class="sortable"
-              :data-sorted="sortKey === header.key ? sortOrder : null"
+      <div class="flex gap-6">
+        <!-- Table Section -->
+        <div class="flex-1">
+          <table class="min-w-full bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
+            <thead>
+              <tr>
+                <th 
+                  v-for="header in tableHeaders" 
+                  :key="header.key"
+                  @click="sortBy(header.key)"
+                  class="sortable"
+                  :data-sorted="sortKey === header.key ? sortOrder : null"
+                >
+                  {{ header.label }}
+                </th>
+              </tr>
+              <tr>
+                <th v-for="header in tableHeaders" :key="header.key">
+                  <input 
+                    v-if="header.key === 'title'" 
+                    v-model="filters.title" 
+                    type="text" 
+                    placeholder="Filter by title" 
+                  >
+                  <input 
+                    v-if="header.key === 'author'" 
+                    v-model="filters.author" 
+                    type="text" 
+                    placeholder="Filter by author" 
+                  >
+                  <input 
+                    v-if="header.key === 'language'" 
+                    v-model="filters.language" 
+                    type="text" 
+                    placeholder="Filter by language" 
+                  >
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr 
+                v-for="result in sortedAndFilteredResults" 
+                :key="result._id" 
+                @click="selectedResult = result"
+                :class="{'bg-blue-50': selectedResult?._id === result._id}"
+                class="cursor-pointer hover:bg-gray-50 transition-colors"
+              >
+                <td>
+                  <div class="tooltip-container">
+                    {{ result._source?.meta?.title || '' }}
+                    <div class="tooltip">{{ result._source?.meta?.title || 'No title available' }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="tooltip-container">
+                    {{ result._source?.meta?.author || '' }}
+                    <div class="tooltip">{{ result._source?.meta?.author || 'No author available' }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="tooltip-container">
+                    {{ formatDate(result._source?.meta?.date || 0) }}
+                    <div class="tooltip">{{ formatDate(result._source?.meta?.date || 0) }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="tooltip-container">
+                    {{ result._source?.meta?.language || '' }}
+                    <div class="tooltip">{{ result._source?.meta?.language || 'No language specified' }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="tooltip-container">
+                    {{ result._source?.file?.filename || '' }}
+                    <div class="tooltip">{{ result._source?.file?.filename || 'No filename available' }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="tooltip-container">
+                    {{ formatFileSize(result._source?.file?.filesize || 0) }}
+                    <div class="tooltip">Size: {{ formatFileSize(result._source?.file?.filesize || 0) }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="tooltip-container">
+                    {{ (result._score || 0).toFixed(2) }}
+                    <div class="tooltip">Relevance Score: {{ result._score || 0 }}</div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Details Panel -->
+        <div v-if="selectedResult" class="w-96 bg-white border border-gray-200 shadow-sm rounded-lg p-6 h-fit sticky top-6">
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Document Details</h3>
+            <button 
+              @click="selectedResult = null"
+              class="text-gray-400 hover:text-gray-600"
             >
-              {{ header.label }}
-            </th>
-          </tr>
-          <tr>
-            <th v-for="header in tableHeaders" :key="header.key">
-              <input 
-                v-if="header.key === 'title'" 
-                v-model="filters.title" 
-                type="text" 
-                placeholder="Filter by title" 
-              >
-              <input 
-                v-if="header.key === 'author'" 
-                v-model="filters.author" 
-                type="text" 
-                placeholder="Filter by author" 
-              >
-              <input 
-                v-if="header.key === 'language'" 
-                v-model="filters.language" 
-                type="text" 
-                placeholder="Filter by language" 
-              >
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="result in sortedAndFilteredResults" :key="result._id">
-            <td>
-              <div class="tooltip-container">
-                {{ result._source?.meta?.title || '' }}
-                <div class="tooltip">{{ result._source?.meta?.title || 'No title available' }}</div>
+              ✕
+            </button>
+          </div>
+          
+          <div class="space-y-4">
+            <!-- Meta Information -->
+            <div class="space-y-2">
+              <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Meta Information</h4>
+              <div class="space-y-2">
+                <div v-if="selectedResult._source?.meta?.title">
+                  <div class="text-sm font-medium text-gray-500">Title</div>
+                  <div class="text-gray-900">{{ selectedResult._source.meta.title }}</div>
+                </div>
+                <div v-if="selectedResult._source?.meta?.author">
+                  <div class="text-sm font-medium text-gray-500">Author</div>
+                  <div class="text-gray-900">{{ selectedResult._source.meta.author }}</div>
+                </div>
+                <div v-if="selectedResult._source?.meta?.date">
+                  <div class="text-sm font-medium text-gray-500">Date</div>
+                  <div class="text-gray-900">{{ formatDate(selectedResult._source.meta.date) }}</div>
+                </div>
+                <div v-if="selectedResult._source?.meta?.language">
+                  <div class="text-sm font-medium text-gray-500">Language</div>
+                  <div class="text-gray-900">{{ selectedResult._source.meta.language }}</div>
+                </div>
               </div>
-            </td>
-            <td>
-              <div class="tooltip-container">
-                {{ result._source?.meta?.author || '' }}
-                <div class="tooltip">{{ result._source?.meta?.author || 'No author available' }}</div>
+            </div>
+
+            <!-- File Information -->
+            <div class="space-y-2">
+              <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">File Information</h4>
+              <div class="space-y-2">
+                <div v-if="selectedResult._source?.file?.filename">
+                  <div class="text-sm font-medium text-gray-500">Filename</div>
+                  <div class="text-gray-900">{{ selectedResult._source.file.filename }}</div>
+                </div>
+                <div v-if="selectedResult._source?.file?.filesize">
+                  <div class="text-sm font-medium text-gray-500">File Size</div>
+                  <div class="text-gray-900">{{ formatFileSize(selectedResult._source.file.filesize) }}</div>
+                </div>
               </div>
-            </td>
-            <td>
-              <div class="tooltip-container">
-                {{ formatDate(result._source?.meta?.date || 0) }}
-                <div class="tooltip">{{ formatDate(result._source?.meta?.date || 0) }}</div>
+            </div>
+
+            <!-- Content Preview -->
+            <div class="space-y-2">
+              <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Content Preview</h4>
+              <div class="bg-gray-50 p-3 rounded-lg">
+                <pre class="text-sm text-gray-700 whitespace-pre-wrap">{{ selectedResult._source?.content }}</pre>
               </div>
-            </td>
-            <td>
-              <div class="tooltip-container">
-                {{ result._source?.meta?.language || '' }}
-                <div class="tooltip">{{ result._source?.meta?.language || 'No language specified' }}</div>
+            </div>
+
+            <!-- Search Score -->
+            <div class="space-y-2">
+              <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Search Relevance</h4>
+              <div class="flex items-center space-x-2">
+                <div class="text-gray-900 font-medium">{{ selectedResult._score.toFixed(2) }}</div>
+                <div class="h-2 flex-1 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    class="h-full bg-blue-500 rounded-full"
+                    :style="{ width: `${(selectedResult._score / maxScore) * 100}%` }"
+                  ></div>
+                </div>
               </div>
-            </td>
-            <td>
-              <div class="tooltip-container">
-                {{ result._source?.file?.filename || '' }}
-                <div class="tooltip">{{ result._source?.file?.filename || 'No filename available' }}</div>
-              </div>
-            </td>
-            <td>
-              <div class="tooltip-container">
-                {{ formatFileSize(result._source?.file?.filesize || 0) }}
-                <div class="tooltip">Size: {{ formatFileSize(result._source?.file?.filesize || 0) }}</div>
-              </div>
-            </td>
-            <td>
-              <div class="tooltip-container">
-                {{ (result._score || 0).toFixed(2) }}
-                <div class="tooltip">Relevance Score: {{ result._score || 0 }}</div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- No Results Message -->
@@ -127,6 +213,7 @@ const results = ref([])
 const isLoading = ref(false)
 const error = ref(null)
 const hasSearched = ref(false)
+const selectedResult = ref(null)
 
 const tableHeaders = [
   { key: 'title', label: 'Title' },
@@ -280,6 +367,11 @@ const formatFileSize = (bytes) => {
   }
   return `${size.toFixed(1)} ${units[unitIndex]}`
 }
+
+const maxScore = computed(() => {
+  if (!results.value.length) return 1
+  return Math.max(...results.value.map(r => r._score))
+})
 </script>
 
 <style>
@@ -458,5 +550,40 @@ thead tr:first-child::after {
   font-weight: normal;
   text-transform: none;
   letter-spacing: normal;
+}
+
+/* Add styles for the details panel */
+.sticky {
+  position: sticky;
+  top: 1.5rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+}
+
+/* Style the scrollbar for the details panel */
+.sticky::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sticky::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.sticky::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.sticky::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Ensure content in pre tags wraps properly */
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 300px;
+  overflow-y: auto;
 }
 </style>
