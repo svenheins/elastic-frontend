@@ -120,70 +120,71 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
 
-        <!-- Details Panel -->
-        <div v-if="selectedResult" class="w-96 bg-white border border-gray-200 shadow-sm rounded-lg p-6 h-fit sticky top-6">
-          <div class="flex justify-between items-start mb-4">
+    <!-- No Results Message -->
+    <div v-else-if="hasSearched" class="text-center py-8 text-gray-600">
+      No results found for your search query.
+    </div>
+
+    <!-- Modal Details Panel -->
+    <Teleport to="body">
+      <div v-if="selectedResult" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
+          <div class="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
             <h3 class="text-lg font-semibold text-gray-900">Document Details</h3>
             <button 
               @click="selectedResult = null"
-              class="text-gray-400 hover:text-gray-600"
+              class="text-gray-400 hover:text-gray-600 p-2"
             >
               ✕
             </button>
           </div>
           
-          <div class="space-y-4">
+          <div class="p-6 space-y-6">
             <!-- Meta Information -->
-            <div class="space-y-2">
+            <div class="space-y-4">
               <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Meta Information</h4>
-              <div class="space-y-2">
-                <div v-if="selectedResult._source?.meta?.title">
-                  <div class="text-sm font-medium text-gray-500">Title</div>
-                  <div class="text-gray-900">{{ selectedResult._source.meta.title }}</div>
-                </div>
-                <div v-if="selectedResult._source?.meta?.author">
-                  <div class="text-sm font-medium text-gray-500">Author</div>
-                  <div class="text-gray-900">{{ selectedResult._source.meta.author }}</div>
-                </div>
-                <div v-if="selectedResult._source?.meta?.date">
-                  <div class="text-sm font-medium text-gray-500">Date</div>
-                  <div class="text-gray-900">{{ formatDate(selectedResult._source.meta.date) }}</div>
-                </div>
-                <div v-if="selectedResult._source?.meta?.language">
-                  <div class="text-sm font-medium text-gray-500">Language</div>
-                  <div class="text-gray-900">{{ selectedResult._source.meta.language }}</div>
-                </div>
+              <div class="grid gap-4">
+                <template v-if="selectedResult._source?.meta">
+                  <div v-for="(value, key) in selectedResult._source.meta" :key="key">
+                    <div class="text-sm font-medium text-gray-500 capitalize">{{ key }}</div>
+                    <div class="text-gray-900">{{ key === 'date' ? formatDate(value) : value }}</div>
+                  </div>
+                </template>
               </div>
             </div>
 
             <!-- File Information -->
-            <div class="space-y-2">
+            <div class="space-y-4">
               <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">File Information</h4>
-              <div class="space-y-2">
-                <div v-if="selectedResult._source?.file?.filename">
-                  <div class="text-sm font-medium text-gray-500">Filename</div>
-                  <div class="text-gray-900">{{ selectedResult._source.file.filename }}</div>
-                </div>
-                <div v-if="selectedResult._source?.file?.filesize">
-                  <div class="text-sm font-medium text-gray-500">File Size</div>
-                  <div class="text-gray-900">{{ formatFileSize(selectedResult._source.file.filesize) }}</div>
-                </div>
+              <div class="grid gap-4">
+                <template v-if="selectedResult._source?.file">
+                  <div v-if="selectedResult._source.file.filename">
+                    <div class="text-sm font-medium text-gray-500">Filename</div>
+                    <div class="text-gray-900">{{ selectedResult._source.file.filename }}</div>
+                  </div>
+                  <div v-if="selectedResult._source.file.filesize">
+                    <div class="text-sm font-medium text-gray-500">File Size</div>
+                    <div class="text-gray-900">{{ formatFileSize(selectedResult._source.file.filesize) }}</div>
+                  </div>
+                </template>
               </div>
             </div>
 
             <!-- Content Preview -->
-            <div class="space-y-2">
+            <div class="space-y-4">
               <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Content Preview</h4>
-              <div class="bg-gray-50 p-3 rounded-lg">
+              <div class="bg-gray-50 p-4 rounded-lg">
                 <pre class="text-sm text-gray-700 whitespace-pre-wrap">{{ selectedResult._source?.content }}</pre>
               </div>
             </div>
 
             <!-- Search Score -->
-            <div class="space-y-2">
+            <div class="space-y-4">
               <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Search Relevance</h4>
-              <div class="flex items-center space-x-2">
+              <div class="flex items-center space-x-3">
                 <div class="text-gray-900 font-medium">{{ selectedResult._score.toFixed(2) }}</div>
                 <div class="h-2 flex-1 bg-gray-200 rounded-full overflow-hidden">
                   <div 
@@ -196,12 +197,7 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- No Results Message -->
-    <div v-else-if="hasSearched" class="text-center py-8 text-gray-600">
-      No results found for your search query.
-    </div>
+    </Teleport>
   </div>
 </template>
 
