@@ -27,89 +27,84 @@
 
     <!-- Results -->
     <div v-if="results.length > 0" class="space-y-6">
-      <table class="min-w-full bg-white border">
+      <table class="min-w-full bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
         <thead>
           <tr>
             <th 
               v-for="header in tableHeaders" 
               :key="header.key"
               @click="sortBy(header.key)"
-              class="p-2 border cursor-pointer hover:bg-gray-50"
+              class="sortable"
+              :data-sorted="sortKey === header.key ? sortOrder : null"
             >
               {{ header.label }}
-              <span v-if="sortKey === header.key">
-                {{ sortOrder === 'asc' ? '↑' : '↓' }}
-              </span>
             </th>
           </tr>
           <tr>
-            <th v-for="header in tableHeaders" :key="header.key" class="p-2 border">
+            <th v-for="header in tableHeaders" :key="header.key">
               <input 
                 v-if="header.key === 'title'" 
                 v-model="filters.title" 
                 type="text" 
                 placeholder="Filter by title" 
-                class="w-full p-1 border rounded text-sm"
               >
               <input 
                 v-if="header.key === 'author'" 
                 v-model="filters.author" 
                 type="text" 
                 placeholder="Filter by author" 
-                class="w-full p-1 border rounded text-sm"
               >
               <input 
                 v-if="header.key === 'language'" 
                 v-model="filters.language" 
                 type="text" 
                 placeholder="Filter by language" 
-                class="w-full p-1 border rounded text-sm"
               >
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="result in sortedAndFilteredResults" :key="result._id" class="hover:bg-gray-50">
-            <td class="p-2 border">
+          <tr v-for="result in sortedAndFilteredResults" :key="result._id">
+            <td>
               <div class="tooltip-container">
                 {{ result._source?.meta?.title || '' }}
-                <span class="tooltip">{{ result._source?.meta?.title || '' }}</span>
+                <div class="tooltip">{{ result._source?.meta?.title || 'No title available' }}</div>
               </div>
             </td>
-            <td class="p-2 border">
+            <td>
               <div class="tooltip-container">
                 {{ result._source?.meta?.author || '' }}
-                <span class="tooltip">{{ result._source?.meta?.author || '' }}</span>
+                <div class="tooltip">{{ result._source?.meta?.author || 'No author available' }}</div>
               </div>
             </td>
-            <td class="p-2 border">
+            <td>
               <div class="tooltip-container">
                 {{ formatDate(result._source?.meta?.date || 0) }}
-                <span class="tooltip">{{ formatDate(result._source?.meta?.date || 0) }}</span>
+                <div class="tooltip">{{ formatDate(result._source?.meta?.date || 0) }}</div>
               </div>
             </td>
-            <td class="p-2 border">
+            <td>
               <div class="tooltip-container">
                 {{ result._source?.meta?.language || '' }}
-                <span class="tooltip">{{ result._source?.meta?.language || '' }}</span>
+                <div class="tooltip">{{ result._source?.meta?.language || 'No language specified' }}</div>
               </div>
             </td>
-            <td class="p-2 border">
+            <td>
               <div class="tooltip-container">
                 {{ result._source?.file?.filename || '' }}
-                <span class="tooltip">{{ result._source?.file?.filename || '' }}</span>
+                <div class="tooltip">{{ result._source?.file?.filename || 'No filename available' }}</div>
               </div>
             </td>
-            <td class="p-2 border">
+            <td>
               <div class="tooltip-container">
                 {{ formatFileSize(result._source?.file?.filesize || 0) }}
-                <span class="tooltip">{{ formatFileSize(result._source?.file?.filesize || 0) }}</span>
+                <div class="tooltip">Size: {{ formatFileSize(result._source?.file?.filesize || 0) }}</div>
               </div>
             </td>
-            <td class="p-2 border">
+            <td>
               <div class="tooltip-container">
                 {{ (result._score || 0).toFixed(2) }}
-                <span class="tooltip">Relevance Score: {{ result._score || 0 }}</span>
+                <div class="tooltip">Relevance Score: {{ result._score || 0 }}</div>
               </div>
             </td>
           </tr>
@@ -299,22 +294,31 @@ const formatFileSize = (bytes) => {
 
 .tooltip {
   visibility: hidden;
+  opacity: 0;
   position: absolute;
-  z-index: 1;
+  z-index: 10;
   bottom: 125%;
   left: 50%;
   transform: translateX(-50%);
   background-color: rgba(0, 0, 0, 0.8);
   color: white;
   text-align: center;
-  padding: 5px 10px;
+  padding: 8px 12px;
   border-radius: 6px;
   white-space: nowrap;
   font-size: 14px;
+  transition: opacity 0.2s, visibility 0.2s;
+  pointer-events: none;
+  min-width: max-content;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  max-width: 300px;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .tooltip-container:hover .tooltip {
   visibility: visible;
+  opacity: 1;
 }
 
 .tooltip::after {
@@ -326,5 +330,133 @@ const formatFileSize = (bytes) => {
   border-width: 5px;
   border-style: solid;
   border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+}
+
+/* Table styles */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+thead th {
+  background-color: #f8fafc;
+  color: #1e293b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 16px;
+  text-align: left;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+thead th:first-child {
+  border-top-left-radius: 6px;
+}
+
+thead th:last-child {
+  border-top-right-radius: 6px;
+}
+
+thead th.sortable {
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  position: relative;
+  padding-right: 24px;
+}
+
+thead th.sortable::before {
+  content: '↕';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.3;
+  font-size: 14px;
+}
+
+thead th.sortable:hover {
+  background-color: #e5e7eb;
+}
+
+thead th.sortable:hover::before {
+  opacity: 0.7;
+}
+
+thead th.sortable[data-sorted="asc"]::before {
+  content: '↑';
+  opacity: 1;
+  color: #2563eb;
+}
+
+thead th.sortable[data-sorted="desc"]::before {
+  content: '↓';
+  opacity: 1;
+  color: #2563eb;
+}
+
+thead th.sortable::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  transition: background-color 0.2s;
+}
+
+thead th.sortable:hover::after {
+  background: #2563eb;
+}
+
+tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background-color: #f1f5f9;
+}
+
+/* Filter inputs */
+input[type="text"] {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  background-color: white;
+  color: #1e293b;
+}
+
+input[type="text"]::placeholder {
+  color: #94a3b8;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Add a subtle hint about sortable columns */
+thead tr:first-child::after {
+  content: 'Click headers to sort';
+  position: absolute;
+  top: -24px;
+  right: 8px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
 }
 </style>
