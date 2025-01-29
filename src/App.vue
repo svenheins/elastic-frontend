@@ -27,100 +27,62 @@
 
     <!-- Results -->
     <div v-if="results.length > 0" class="space-y-6">
-      <div class="flex gap-6">
-        <!-- Table Section -->
-        <div class="flex-1">
-          <table class="min-w-full bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
-            <thead>
-              <tr>
-                <th 
-                  v-for="header in tableHeaders" 
-                  :key="header.key"
-                  @click="sortBy(header.key)"
-                  class="sortable"
-                  :data-sorted="sortKey === header.key ? sortOrder : null"
-                >
-                  {{ header.label }}
-                </th>
-              </tr>
-              <tr>
-                <th v-for="header in tableHeaders" :key="header.key">
-                  <input 
-                    v-if="header.key === 'title'" 
-                    v-model="filters.title" 
-                    type="text" 
-                    placeholder="Filter by title" 
-                  >
-                  <input 
-                    v-if="header.key === 'author'" 
-                    v-model="filters.author" 
-                    type="text" 
-                    placeholder="Filter by author" 
-                  >
-                  <input 
-                    v-if="header.key === 'language'" 
-                    v-model="filters.language" 
-                    type="text" 
-                    placeholder="Filter by language" 
-                  >
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr 
-                v-for="result in sortedAndFilteredResults" 
-                :key="result._id" 
-                @click="selectedResult = result"
-                :class="{'bg-blue-50': selectedResult?._id === result._id}"
-                class="cursor-pointer hover:bg-gray-50 transition-colors"
+      <table class="min-w-full bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
+        <thead>
+          <tr>
+            <th 
+              v-for="header in tableHeaders" 
+              :key="header.key"
+              @click="sortBy(header.key)"
+              class="sortable"
+              :data-sorted="sortKey === header.key ? sortOrder : null"
+            >
+              {{ header.label }}
+            </th>
+          </tr>
+          <tr>
+            <th v-for="header in tableHeaders" :key="header.key">
+              <input 
+                v-if="header.key === 'title'" 
+                v-model="filters.title" 
+                type="text" 
+                placeholder="Filter by title" 
+                class="w-full p-1 text-sm border rounded"
               >
-                <td>
-                  <div class="tooltip-container">
-                    {{ result._source?.meta?.title || '' }}
-                    <div class="tooltip">{{ result._source?.meta?.title || 'No title available' }}</div>
-                  </div>
-                </td>
-                <td>
-                  <div class="tooltip-container">
-                    {{ result._source?.meta?.author || '' }}
-                    <div class="tooltip">{{ result._source?.meta?.author || 'No author available' }}</div>
-                  </div>
-                </td>
-                <td>
-                  <div class="tooltip-container">
-                    {{ formatDate(result._source?.meta?.date || 0) }}
-                    <div class="tooltip">{{ formatDate(result._source?.meta?.date || 0) }}</div>
-                  </div>
-                </td>
-                <td>
-                  <div class="tooltip-container">
-                    {{ result._source?.meta?.language || '' }}
-                    <div class="tooltip">{{ result._source?.meta?.language || 'No language specified' }}</div>
-                  </div>
-                </td>
-                <td>
-                  <div class="tooltip-container">
-                    {{ result._source?.file?.filename || '' }}
-                    <div class="tooltip">{{ result._source?.file?.filename || 'No filename available' }}</div>
-                  </div>
-                </td>
-                <td>
-                  <div class="tooltip-container">
-                    {{ formatFileSize(result._source?.file?.filesize || 0) }}
-                    <div class="tooltip">Size: {{ formatFileSize(result._source?.file?.filesize || 0) }}</div>
-                  </div>
-                </td>
-                <td>
-                  <div class="tooltip-container">
-                    {{ (result._score || 0).toFixed(2) }}
-                    <div class="tooltip">Relevance Score: {{ result._score || 0 }}</div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+              <input 
+                v-if="header.key === 'author'" 
+                v-model="filters.author" 
+                type="text" 
+                placeholder="Filter by author" 
+                class="w-full p-1 text-sm border rounded"
+              >
+              <input 
+                v-if="header.key === 'language'" 
+                v-model="filters.language" 
+                type="text" 
+                placeholder="Filter by language" 
+                class="w-full p-1 text-sm border rounded"
+              >
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
+            v-for="result in sortedAndFilteredResults" 
+            :key="result._id" 
+            @click="selectedResult = result"
+            :class="{'bg-blue-50': selectedResult?._id === result._id}"
+            class="cursor-pointer hover:bg-gray-50 transition-colors"
+          >
+            <td v-for="header in tableHeaders" :key="header.key">
+              <div class="tooltip-container">
+                {{ getCellContent(result, header.key) }}
+                <div class="tooltip">{{ getCellTooltip(result, header.key) }}</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- No Results Message -->
@@ -128,88 +90,34 @@
       No results found for your search query.
     </div>
 
-    <!-- Modal Details Panel -->
-    <Teleport to="body">
-      <div v-if="selectedResult" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
-          <div class="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-gray-900">Document Details</h3>
-            <button 
-              @click="selectedResult = null"
-              class="text-gray-400 hover:text-gray-600 p-2"
-            >
-              ✕
-            </button>
-          </div>
-          
-          <div class="p-6 space-y-6">
-            <!-- Meta Information -->
-            <div class="space-y-4">
-              <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Meta Information</h4>
-              <div class="grid gap-4">
-                <template v-if="selectedResult._source?.meta">
-                  <div v-for="(value, key) in selectedResult._source.meta" :key="key">
-                    <div class="text-sm font-medium text-gray-500 capitalize">{{ key }}</div>
-                    <div class="text-gray-900">{{ key === 'date' ? formatDate(value) : value }}</div>
-                  </div>
-                </template>
-              </div>
-            </div>
-
-            <!-- File Information -->
-            <div class="space-y-4">
-              <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">File Information</h4>
-              <div class="grid gap-4">
-                <template v-if="selectedResult._source?.file">
-                  <div v-if="selectedResult._source.file.filename">
-                    <div class="text-sm font-medium text-gray-500">Filename</div>
-                    <div class="text-gray-900">{{ selectedResult._source.file.filename }}</div>
-                  </div>
-                  <div v-if="selectedResult._source.file.filesize">
-                    <div class="text-sm font-medium text-gray-500">File Size</div>
-                    <div class="text-gray-900">{{ formatFileSize(selectedResult._source.file.filesize) }}</div>
-                  </div>
-                </template>
-              </div>
-            </div>
-
-            <!-- Content Preview -->
-            <div class="space-y-4">
-              <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Content Preview</h4>
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <pre class="text-sm text-gray-700 whitespace-pre-wrap">{{ selectedResult._source?.content }}</pre>
-              </div>
-            </div>
-
-            <!-- Search Score -->
-            <div class="space-y-4">
-              <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Search Relevance</h4>
-              <div class="flex items-center space-x-3">
-                <div class="text-gray-900 font-medium">{{ selectedResult._score.toFixed(2) }}</div>
-                <div class="h-2 flex-1 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    class="h-full bg-blue-500 rounded-full"
-                    :style="{ width: `${(selectedResult._score / maxScore) * 100}%` }"
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- Details Modal -->
+    <DocumentDetailsModal
+      v-model="selectedResult"
+      :document="selectedResult || {}"
+      :max-score="maxScore"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
+import DocumentDetailsModal from './components/DocumentDetailsModal.vue'
+import './assets/styles.css'
 
 const searchQuery = ref('')
 const results = ref([])
-const isLoading = ref(false)
-const error = ref(null)
-const hasSearched = ref(false)
 const selectedResult = ref(null)
+const isLoading = ref(false)
+const error = ref('')
+const sortKey = ref('score')
+const sortOrder = ref('desc')
+const hasSearched = ref(false)
+
+const filters = ref({
+  title: '',
+  author: '',
+  language: ''
+})
 
 const tableHeaders = [
   { key: 'title', label: 'Title' },
@@ -221,65 +129,10 @@ const tableHeaders = [
   { key: 'score', label: 'Score' }
 ]
 
-const sortKey = ref('score')
-const sortOrder = ref('desc')
-const filters = ref({
-  title: '',
-  author: '',
-  language: ''
+const maxScore = computed(() => {
+  if (!results.value.length) return 1
+  return Math.max(...results.value.map(r => r._score))
 })
-
-const performSearch = async () => {
-  if (!searchQuery.value.trim()) return
-  
-  isLoading.value = true
-  error.value = null
-  hasSearched.value = true
-  
-  try {
-    console.log('Searching for:', searchQuery.value)
-    const response = await fetch('http://localhost:9200/test/_search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(`${import.meta.env.VITE_ELASTIC_USERNAME}:${import.meta.env.VITE_ELASTIC_PASSWORD}`)}`
-      },
-      body: JSON.stringify({
-        query: {
-          multi_match: {
-            query: searchQuery.value,
-            fields: ["content", "meta.title", "meta.author"]
-          }
-        }
-      })
-    })
-
-    const data = await response.json()
-    console.log('Response:', data)
-
-    if (!response.ok) {
-      throw new Error('Search request failed')
-    }
-
-    results.value = data.hits.hits
-    console.log('Found', results.value.length, 'results')
-  } catch (e) {
-    console.error('Error:', e)
-    error.value = `Error performing search: ${e.message}`
-    results.value = []
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const sortBy = (key) => {
-  if (sortKey.value === key) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortKey.value = key
-    sortOrder.value = 'desc'
-  }
-}
 
 const sortedAndFilteredResults = computed(() => {
   let filteredResults = results.value.filter(result => {
@@ -287,73 +140,76 @@ const sortedAndFilteredResults = computed(() => {
     const author = result._source?.meta?.author || ''
     const language = result._source?.meta?.language || ''
     
-    const matchTitle = title.toLowerCase().includes(filters.value.title.toLowerCase())
-    const matchAuthor = author.toLowerCase().includes(filters.value.author.toLowerCase())
-    const matchLanguage = language.toLowerCase().includes(filters.value.language.toLowerCase())
-    
-    return matchTitle && matchAuthor && matchLanguage
+    return (
+      title.toLowerCase().includes(filters.value.title.toLowerCase()) &&
+      author.toLowerCase().includes(filters.value.author.toLowerCase()) &&
+      language.toLowerCase().includes(filters.value.language.toLowerCase())
+    )
   })
 
   return filteredResults.sort((a, b) => {
-    let aValue, bValue
+    let aValue = getValue(a, sortKey.value)
+    let bValue = getValue(b, sortKey.value)
     
-    switch(sortKey.value) {
-      case 'title':
-        aValue = a._source?.meta?.title || ''
-        bValue = b._source?.meta?.title || ''
-        break
-      case 'author':
-        aValue = a._source?.meta?.author || ''
-        bValue = b._source?.meta?.author || ''
-        break
-      case 'date':
-        aValue = new Date(a._source?.meta?.date || 0)
-        bValue = new Date(b._source?.meta?.date || 0)
-        break
-      case 'language':
-        aValue = a._source?.meta?.language || ''
-        bValue = b._source?.meta?.language || ''
-        break
-      case 'filename':
-        aValue = a._source?.file?.filename || ''
-        bValue = b._source?.file?.filename || ''
-        break
-      case 'filesize':
-        aValue = a._source?.file?.filesize || 0
-        bValue = b._source?.file?.filesize || 0
-        break
-      case 'score':
-        aValue = a._score || 0
-        bValue = b._score || 0
-        break
-      default:
-        aValue = a._score || 0
-        bValue = b._score || 0
+    if (sortOrder.value === 'desc') {
+      ;[aValue, bValue] = [bValue, aValue]
     }
-
-    if (sortOrder.value === 'asc') {
-      return aValue > bValue ? 1 : -1
+    
+    if (typeof aValue === 'string') {
+      return aValue.localeCompare(bValue)
     }
-    return aValue < bValue ? 1 : -1
+    return aValue - bValue
   })
 })
 
-const truncateContent = (content) => {
-  const maxLength = 200
-  if (content.length <= maxLength) return content
-  return content.substring(0, maxLength) + '...'
+function getValue(result, key) {
+  switch (key) {
+    case 'title':
+      return result._source?.meta?.title || ''
+    case 'author':
+      return result._source?.meta?.author || ''
+    case 'date':
+      return result._source?.meta?.date || 0
+    case 'language':
+      return result._source?.meta?.language || ''
+    case 'filename':
+      return result._source?.file?.filename || ''
+    case 'filesize':
+      return result._source?.file?.filesize || 0
+    case 'score':
+      return result._score || 0
+    default:
+      return ''
+  }
 }
 
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('en-US', {
+function getCellContent(result, key) {
+  const value = getValue(result, key)
+  if (key === 'date') return formatDate(value)
+  if (key === 'filesize') return formatFileSize(value)
+  if (key === 'score') return value.toFixed(2)
+  return value
+}
+
+function getCellTooltip(result, key) {
+  const value = getValue(result, key)
+  if (key === 'filesize') return `Size: ${formatFileSize(value)}`
+  if (key === 'score') return `Relevance Score: ${value}`
+  if (!value) return `No ${key} available`
+  return value
+}
+
+function formatDate(dateString) {
+  if (!dateString) return ''
+  return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
-    month: 'short',
+    month: 'long',
     day: 'numeric'
-  }).format(date)
+  })
 }
 
-const formatFileSize = (bytes) => {
+function formatFileSize(bytes) {
+  if (!bytes) return '0 B'
   const units = ['B', 'KB', 'MB', 'GB']
   let size = bytes
   let unitIndex = 0
@@ -364,10 +220,47 @@ const formatFileSize = (bytes) => {
   return `${size.toFixed(1)} ${units[unitIndex]}`
 }
 
-const maxScore = computed(() => {
-  if (!results.value.length) return 1
-  return Math.max(...results.value.map(r => r._score))
-})
+function sortBy(key) {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortOrder.value = 'asc'
+  }
+}
+
+async function performSearch() {
+  if (!searchQuery.value.trim()) return
+  
+  isLoading.value = true
+  error.value = ''
+  hasSearched.value = true
+  
+  try {
+    const response = await fetch('http://localhost:3000/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query: searchQuery.value
+      })
+    })
+    
+    if (!response.ok) {
+      throw new Error('Search request failed')
+    }
+    
+    const data = await response.json()
+    results.value = data.hits.hits
+    selectedResult.value = null
+  } catch (err) {
+    error.value = 'Failed to perform search. Please try again.'
+    results.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
 </script>
 
 <style>
