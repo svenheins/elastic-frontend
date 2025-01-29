@@ -60,7 +60,7 @@ http.cors.allow-headers: X-Requested-With, X-Auth-Token, Content-Type, Content-L
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/svenheins/elastic-frontend.git
    cd elastic-frontend
    ```
 
