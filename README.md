@@ -46,13 +46,14 @@ Before you begin, ensure you have:
 
 ### Elasticsearch Configuration
 
-Ensure your Elasticsearch instance has CORS enabled. Add these settings to your `elasticsearch.yml`:
+Ensure your Elasticsearch instance has CORS enabled if you are working in a local development environment. Add these settings to your `elasticsearch.yml`:
 
 ```yaml
 http.cors.enabled: true
-http.cors.allow-origin: "http://localhost:5173"
+http.cors.allow-origin: "*"
+http.cors.allow-credentials: true
 http.cors.allow-methods: OPTIONS, HEAD, GET, POST, PUT, DELETE
-http.cors.allow-headers: X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
+http.cors.allow-headers: X-Requested-With, X-Auth-Token, Content-Type, Content-Length, Authorization, Access-Control-Allow-Headers, Accept, x-elastic-client-meta
 ```
 
 ## Installation
