@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://server:3000
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      - server
+    networks:
+      - frontend-network
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    env_file:
+      - .env.docker
+    ports:
+      - "3000:3000"
+    environment:
+      - ELASTIC_NODE=${ELASTIC_NODE}
+      - ELASTIC_USERNAME=${ELASTIC_USERNAME}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    volumes:
+      - ./server.js:/app/server.js
+    networks:
+      - frontend-network
+      - elastic-network
+
+networks:
+  frontend-network:
+  elastic-network:
+    external: true
+    name: elastic-crawler_default

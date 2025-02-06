@@ -3,7 +3,12 @@ import cors from 'cors';
 import { Client } from '@elastic/elasticsearch';
 import dotenv from 'dotenv';
 
-dotenv.config();
+// Load environment variables based on NODE_ENV
+if (process.env.NODE_ENV === 'development') {
+  dotenv.config({ path: '.env' });
+} else {
+  dotenv.config({ path: '.env.docker' });
+}
 
 const app = express();
 const port = 3000;
@@ -14,7 +19,7 @@ app.use(express.json());
 
 // Create Elasticsearch client
 const client = new Client({
-  node: 'http://localhost:9200',
+  node: process.env.ELASTIC_NODE,
   auth: {
     username: process.env.ELASTIC_USERNAME || 'elastic',
     password: process.env.ELASTIC_PASSWORD
