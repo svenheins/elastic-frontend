@@ -37,7 +37,7 @@ app.post('/search', async (req, res) => {
         query: {
           multi_match: {
             query,
-            fields: ["content", "meta.title", "meta.author"]
+            fields: ["content", "meta.title", "meta.author", "attributes.owner", "attributes.group"]
           }
         }
       }

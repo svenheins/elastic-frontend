@@ -63,6 +63,20 @@
                 placeholder="Filter by language" 
                 class="w-full p-1 text-sm border rounded"
               >
+              <input 
+                v-if="header.key === 'owner'" 
+                v-model="filters.owner" 
+                type="text" 
+                placeholder="Filter by owner" 
+                class="w-full p-1 text-sm border rounded"
+              >
+              <input 
+                v-if="header.key === 'group'" 
+                v-model="filters.group" 
+                type="text" 
+                placeholder="Filter by group" 
+                class="w-full p-1 text-sm border rounded"
+              >
             </th>
           </tr>
         </thead>
@@ -116,7 +130,9 @@ const hasSearched = ref(false)
 const filters = ref({
   title: '',
   author: '',
-  language: ''
+  language: '',
+  owner: '',
+  group: ''
 })
 
 const tableHeaders = [
@@ -126,6 +142,8 @@ const tableHeaders = [
   { key: 'language', label: 'Language' },
   { key: 'filename', label: 'File' },
   { key: 'filesize', label: 'Size' },
+  { key: 'owner', label: 'Owner' },
+  { key: 'group', label: 'Group' },
   { key: 'score', label: 'Score' }
 ]
 
@@ -140,10 +158,15 @@ const sortedAndFilteredResults = computed(() => {
     const author = result._source?.meta?.author || ''
     const language = result._source?.meta?.language || ''
     
+    const owner = result._source?.attributes?.owner || ''
+    const group = result._source?.attributes?.group || ''
+    
     return (
       title.toLowerCase().includes(filters.value.title.toLowerCase()) &&
       author.toLowerCase().includes(filters.value.author.toLowerCase()) &&
-      language.toLowerCase().includes(filters.value.language.toLowerCase())
+      language.toLowerCase().includes(filters.value.language.toLowerCase()) &&
+      owner.toLowerCase().includes(filters.value.owner.toLowerCase()) &&
+      group.toLowerCase().includes(filters.value.group.toLowerCase())
     )
   })
 
@@ -178,6 +201,10 @@ function getValue(result, key) {
       return result._source?.file?.filesize || 0
     case 'score':
       return result._score || 0
+    case 'owner':
+      return result._source?.attributes?.owner || ''
+    case 'group':
+      return result._source?.attributes?.group || ''
     default:
       return ''
   }
