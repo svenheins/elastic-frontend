@@ -44,6 +44,16 @@
                     <td class="py-2 text-gray-900">{{ formatFileSize(document._source.file.filesize) }}</td>
                   </tr>
                 </template>
+                <template v-if="document._source?.attributes">
+                  <tr v-if="document._source.attributes.owner" class="border-b border-gray-100">
+                    <td class="py-2 pr-4 text-sm font-medium text-gray-500 w-1/3">Owner</td>
+                    <td class="py-2 text-gray-900">{{ document._source.attributes.owner }}</td>
+                  </tr>
+                  <tr v-if="document._source.attributes.group" class="border-b border-gray-100">
+                    <td class="py-2 pr-4 text-sm font-medium text-gray-500 w-1/3">Group</td>
+                    <td class="py-2 text-gray-900">{{ document._source.attributes.group }}</td>
+                  </tr>
+                </template>
               </tbody>
             </table>
           </div>
