@@ -1,8 +1,9 @@
 <template>
-  <Teleport to="body">
-    <div v-if="modelValue" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
-        <div class="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+  <div v-if="modelValue" class="modal-overlay">
+    <div class="modal-backdrop" @click="$emit('update:modelValue', null)"></div>
+    <div class="modal-container">
+      <div class="modal-content">
+        <div class="modal-header">
           <h3 class="text-lg font-semibold text-gray-900">Document Details</h3>
           <button 
             @click="$emit('update:modelValue', null)"
@@ -80,7 +81,7 @@
         </div>
       </div>
     </div>
-  </Teleport>
+  </div>
 </template>
 
 <script setup>
@@ -122,3 +123,55 @@ const formatFileSize = (bytes) => {
   return `${size.toFixed(1)} ${units[unitIndex]}`
 }
 </script>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-container {
+  position: relative;
+  z-index: 1001;
+  width: 90%;
+  max-width: 800px;
+  margin: 2rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+</style>
