@@ -58,6 +58,75 @@
             </table>
           </div>
 
+          <!-- Metadata Information -->
+          <div v-if="document._source?.metadata" class="space-y-4">
+            <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Metadata</h4>
+            <table class="w-full">
+              <tbody>
+                <!-- Project Information -->
+                <template v-if="document._source.metadata.project">
+                  <tr class="border-b border-gray-100">
+                    <td colspan="2" class="py-2 text-sm font-semibold text-gray-600">Project Information</td>
+                  </tr>
+                  <tr v-for="(value, key) in document._source.metadata.project" :key="key" class="border-b border-gray-100">
+                    <td class="py-2 pr-4 text-sm font-medium text-gray-500 capitalize w-1/3">{{ key.replace('_', ' ') }}</td>
+                    <td class="py-2 text-gray-900">{{ value }}</td>
+                  </tr>
+                </template>
+
+                <!-- Classification Information -->
+                <template v-if="document._source.metadata.classification">
+                  <tr class="border-b border-gray-100">
+                    <td colspan="2" class="py-2 text-sm font-semibold text-gray-600">Classification</td>
+                  </tr>
+                  <tr v-for="(value, key) in document._source.metadata.classification" :key="key" class="border-b border-gray-100">
+                    <td class="py-2 pr-4 text-sm font-medium text-gray-500 capitalize w-1/3">{{ key.replace('_', ' ') }}</td>
+                    <td class="py-2 text-gray-900">{{ value }}</td>
+                  </tr>
+                </template>
+
+                <!-- Content Information -->
+                <template v-if="document._source.metadata.content">
+                  <tr class="border-b border-gray-100">
+                    <td colspan="2" class="py-2 text-sm font-semibold text-gray-600">Content Information</td>
+                  </tr>
+                  <tr v-for="(value, key) in document._source.metadata.content" :key="key" class="border-b border-gray-100">
+                    <td class="py-2 pr-4 text-sm font-medium text-gray-500 capitalize w-1/3">{{ key.replace('_', ' ') }}</td>
+                    <td class="py-2 text-gray-900">
+                      <template v-if="Array.isArray(value)">
+                        {{ value.join(', ') }}
+                      </template>
+                      <template v-else>
+                        {{ value }}
+                      </template>
+                    </td>
+                  </tr>
+                </template>
+
+                <!-- Quality Information -->
+                <template v-if="document._source.metadata.quality">
+                  <tr class="border-b border-gray-100">
+                    <td colspan="2" class="py-2 text-sm font-semibold text-gray-600">Quality Information</td>
+                  </tr>
+                  <tr v-for="(value, key) in document._source.metadata.quality" :key="key" class="border-b border-gray-100">
+                    <td class="py-2 pr-4 text-sm font-medium text-gray-500 capitalize w-1/3">{{ key.replace('_', ' ') }}</td>
+                    <td class="py-2 text-gray-900">
+                      <template v-if="key === 'quality_score'">
+                        {{ value.toFixed(2) }}
+                      </template>
+                      <template v-else-if="key === 'review_date'">
+                        {{ formatDate(value) }}
+                      </template>
+                      <template v-else>
+                        {{ value }}
+                      </template>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
           <!-- Content Preview -->
           <div class="space-y-4">
             <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Content Preview</h4>
