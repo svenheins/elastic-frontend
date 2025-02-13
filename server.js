@@ -3,11 +3,19 @@ import cors from 'cors';
 import { Client } from '@elastic/elasticsearch';
 import dotenv from 'dotenv';
 
-// Load environment variables based on NODE_ENV
-if (process.env.NODE_ENV === 'development') {
-  dotenv.config({ path: '.env' });
+// read .env
+dotenv.config();
+
+// Load environment variables
+if (process.env.DOCKER_ENVIRONMENT === 'true') {
+  console.info('Using elasticsearch node');
+  // set node to http://elasticsearch:9200
+  process.env.ELASTIC_NODE = 'http://elasticsearch:9200';
+
 } else {
-  dotenv.config({ path: '.env.docker' });
+  console.info('Using localhost node');
+  // set node to http://localhost:9200
+  process.env.ELASTIC_NODE = 'http://localhost:9200';  
 }
 
 const app = express();
