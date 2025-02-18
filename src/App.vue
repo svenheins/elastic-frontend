@@ -27,6 +27,10 @@
 
     <!-- Results -->
     <div v-if="results.length > 0" class="space-y-6">
+      <!-- Results count -->
+      <div class="text-sm text-gray-600">
+        Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, results.length) }} of {{ results.length }} results
+      </div>
       <table class="min-w-full bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
         <thead>
           <tr>
@@ -97,6 +101,39 @@
           </tr>
         </tbody>
       </table>
+
+      <!-- Pagination Controls -->
+      <div class="mt-4 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+          <select 
+            v-model="itemsPerPage" 
+            class="border rounded p-1"
+            @change="currentPage = 1"
+          >
+            <option :value="10">10 per page</option>
+            <option :value="25">25 per page</option>
+            <option :value="50">50 per page</option>
+            <option :value="100">100 per page</option>
+          </select>
+        </div>
+        <div class="flex space-x-2">
+          <button 
+            @click="currentPage--" 
+            :disabled="currentPage === 1"
+            class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <span class="px-3 py-1">Page {{ currentPage }} of {{ totalPages }}</span>
+          <button 
+            @click="currentPage++" 
+            :disabled="currentPage >= totalPages"
+            class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- No Results Message -->
@@ -114,7 +151,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import DocumentDetailsModal from './components/DocumentDetailsModal.vue'
 import './assets/styles.css'
 
@@ -126,6 +163,9 @@ const error = ref('')
 const sortKey = ref('score')
 const sortOrder = ref('desc')
 const hasSearched = ref(false)
+const currentPage = ref(1)
+const itemsPerPage = ref(25)
+const totalHits = ref(0)
 
 const filters = ref({
   title: '',
@@ -152,25 +192,23 @@ const maxScore = computed(() => {
   return Math.max(...results.value.map(r => r._score))
 })
 
-const sortedAndFilteredResults = computed(() => {
-  let filteredResults = results.value.filter(result => {
-    const title = result._source?.meta?.title || ''
-    const author = result._source?.meta?.author || ''
-    const language = result._source?.meta?.language || ''
-    
-    const owner = result._source?.attributes?.owner || ''
-    const group = result._source?.attributes?.group || ''
-    
-    return (
-      title.toLowerCase().includes(filters.value.title.toLowerCase()) &&
-      author.toLowerCase().includes(filters.value.author.toLowerCase()) &&
-      language.toLowerCase().includes(filters.value.language.toLowerCase()) &&
-      owner.toLowerCase().includes(filters.value.owner.toLowerCase()) &&
-      group.toLowerCase().includes(filters.value.group.toLowerCase())
-    )
-  })
+// Compute total pages
+const totalPages = computed(() => Math.ceil(totalHits.value / itemsPerPage.value))
 
-  return filteredResults.sort((a, b) => {
+// Compute paginated results
+// Watch for changes in filters that require a new search
+watch([filters, currentPage, itemsPerPage], async () => {
+  if (hasSearched.value) {
+    await performSearch()
+  }
+}, { deep: true })
+
+// Compute sorted and filtered results
+const sortedAndFilteredResults = computed(() => {
+  // Just apply sorting since filtering is now handled by the server
+  const sortedResults = [...results.value]
+
+  return sortedResults.sort((a, b) => {
     let aValue = getValue(a, sortKey.value)
     let bValue = getValue(b, sortKey.value)
     
@@ -262,6 +300,7 @@ async function performSearch() {
   isLoading.value = true
   error.value = ''
   hasSearched.value = true
+  currentPage.value = 1  // Reset to first page on new search
   
   try {
     const response = await fetch('http://localhost:3000/search', {
@@ -270,7 +309,16 @@ async function performSearch() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        query: searchQuery.value
+        query: searchQuery.value,
+        page: currentPage.value,
+        size: itemsPerPage.value,
+        filters: {
+          title: filters.value.title,
+          author: filters.value.author,
+          language: filters.value.language,
+          owner: filters.value.owner,
+          group: filters.value.group
+        }
       })
     })
     
@@ -280,10 +328,12 @@ async function performSearch() {
     
     const data = await response.json()
     results.value = data.hits.hits
+    totalHits.value = data.hits.total.value
     selectedResult.value = null
   } catch (err) {
     error.value = 'Failed to perform search. Please try again.'
     results.value = []
+    totalHits.value = 0
   } finally {
     isLoading.value = false
   }

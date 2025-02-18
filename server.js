@@ -29,17 +29,46 @@ const client = new Client({
 // Search endpoint
 app.post('/search', async (req, res) => {
   try {
-    const { query } = req.body;
+    const { query, page = 1, size = 25, filters = {} } = req.body;
     
+    // Build query based on search and filters
+    const must = [
+      {
+        multi_match: {
+          query,
+          fields: ["content", "meta.title", "meta.author", "attributes.owner", "attributes.group"]
+        }
+      }
+    ];
+
+    // Add filter conditions
+    if (filters.title) {
+      must.push({ match_phrase_prefix: { "meta.title": filters.title } });
+    }
+    if (filters.author) {
+      must.push({ match_phrase_prefix: { "meta.author": filters.author } });
+    }
+    if (filters.language) {
+      must.push({ match_phrase_prefix: { "meta.language": filters.language } });
+    }
+    if (filters.owner) {
+      must.push({ match_phrase_prefix: { "attributes.owner": filters.owner } });
+    }
+    if (filters.group) {
+      must.push({ match_phrase_prefix: { "attributes.group": filters.group } });
+    }
+
     const response = await client.search({
       index: 'test',
       body: {
         query: {
-          multi_match: {
-            query,
-            fields: ["content", "meta.title", "meta.author", "attributes.owner", "attributes.group"]
+          bool: {
+            must: must
           }
-        }
+        },
+        from: (page - 1) * size,
+        size: size,
+        track_total_hits: true
       }
     });
 
