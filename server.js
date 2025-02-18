@@ -37,7 +37,19 @@ const client = new Client({
 // Search endpoint
 app.post('/search', async (req, res) => {
   try {
-    const { query, page = 1, size = 25, filters = {} } = req.body;
+    const { query, page = 1, size = 25, filters = {}, sort = { key: '_score', order: 'desc' } } = req.body;
+    
+    // Map frontend field names to Elasticsearch field paths
+    const fieldMap = {
+      'title': 'meta.title.keyword',
+      'author': 'meta.author.keyword',
+      'language': 'meta.language.keyword',
+      'owner': 'attributes.owner.keyword',
+      'group': 'attributes.group.keyword',
+      'score': '_score',
+      'filesize': 'file.filesize',
+      'date': 'meta.date'
+    };
     
     // Build query based on search and filters
     const must = [
@@ -76,7 +88,10 @@ app.post('/search', async (req, res) => {
         },
         from: (page - 1) * size,
         size: size,
-        track_total_hits: true
+        track_total_hits: true,
+        sort: [
+          { [fieldMap[sort.key] || '_score']: { order: sort.order } }
+        ]
       }
     });
 

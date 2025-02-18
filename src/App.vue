@@ -205,32 +205,15 @@ watch([filters], async () => {
   }
 }, { deep: true })
 
-// Watch for pagination changes
-watch([currentPage, itemsPerPage], async () => {
+// Watch for pagination or sorting changes
+watch([currentPage, itemsPerPage, sortKey, sortOrder], async () => {
   if (hasSearched.value) {
     await performSearch()
   }
 })
 
-// Compute sorted and filtered results
-const sortedAndFilteredResults = computed(() => {
-  // Just apply sorting since filtering is now handled by the server
-  const sortedResults = [...results.value]
-
-  return sortedResults.sort((a, b) => {
-    let aValue = getValue(a, sortKey.value)
-    let bValue = getValue(b, sortKey.value)
-    
-    if (sortOrder.value === 'desc') {
-      ;[aValue, bValue] = [bValue, aValue]
-    }
-    
-    if (typeof aValue === 'string') {
-      return aValue.localeCompare(bValue)
-    }
-    return aValue - bValue
-  })
-})
+// Use results directly since sorting is now handled by the server
+const sortedAndFilteredResults = computed(() => results.value)
 
 function getValue(result, key) {
   switch (key) {
@@ -331,6 +314,10 @@ async function performSearch() {
           language: filters.value.language,
           owner: filters.value.owner,
           group: filters.value.group
+        },
+        sort: {
+          key: sortKey.value,
+          order: sortOrder.value
         }
       })
     })
