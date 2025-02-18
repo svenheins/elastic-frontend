@@ -29,7 +29,7 @@
     <div v-if="results.length > 0" class="space-y-6">
       <!-- Results count -->
       <div class="text-sm text-gray-600">
-        Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, results.length) }} of {{ results.length }} results
+        Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, totalHits) }} of {{ totalHits }} results
       </div>
       <table class="min-w-full bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
         <thead>
@@ -197,11 +197,20 @@ const totalPages = computed(() => Math.ceil(totalHits.value / itemsPerPage.value
 
 // Compute paginated results
 // Watch for changes in filters that require a new search
-watch([filters, currentPage, itemsPerPage], async () => {
+// Watch for filter changes
+watch([filters], async () => {
   if (hasSearched.value) {
+    currentPage.value = 1 // Reset to first page when filters change
     await performSearch()
   }
 }, { deep: true })
+
+// Watch for pagination changes
+watch([currentPage, itemsPerPage], async () => {
+  if (hasSearched.value) {
+    await performSearch()
+  }
+})
 
 // Compute sorted and filtered results
 const sortedAndFilteredResults = computed(() => {
@@ -300,7 +309,11 @@ async function performSearch() {
   isLoading.value = true
   error.value = ''
   hasSearched.value = true
-  currentPage.value = 1  // Reset to first page on new search
+  
+  // Only reset page on new search, not on pagination changes
+  if (!hasSearched.value) {
+    currentPage.value = 1
+  }
   
   try {
     const response = await fetch('http://localhost:3000/search', {
