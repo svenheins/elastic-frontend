@@ -20,12 +20,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.server
-    env_file:
-      - .env.docker
     ports:
       - "3000:3000"
     environment:
-      - ELASTIC_NODE=${ELASTIC_NODE}
+      - DOCKER_ENVIRONMENT=true
       - ELASTIC_USERNAME=${ELASTIC_USERNAME}
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
     volumes:

@@ -58,6 +58,51 @@
             </table>
           </div>
 
+          <!-- Metadata Information -->
+          <div v-if="document._source?.metadata" class="space-y-4">
+            <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Metadata</h4>
+            <table class="w-full">
+              <tbody>
+                <template v-for="(category, categoryKey) in document._source.metadata" :key="categoryKey">
+                  <!-- Category Header -->
+                  <tr v-if="typeof category === 'object'" class="border-b border-gray-100">
+                    <td colspan="2" class="py-2 text-sm font-semibold text-gray-600">{{ formatTitle(categoryKey) }}</td>
+                  </tr>
+                  <!-- Category Content -->
+                  <template v-if="typeof category === 'object'">
+                    <tr v-for="(value, key) in category" :key="categoryKey + '-' + key" class="border-b border-gray-100">
+                      <td class="py-2 pr-4 text-sm font-medium text-gray-500 capitalize w-1/3">{{ formatTitle(key) }}</td>
+                      <td class="py-2 text-gray-900">
+                        <template v-if="Array.isArray(value)">
+                          {{ value.join(', ') }}
+                        </template>
+                        <template v-else-if="typeof value === 'number' && key.includes('score')">
+                          {{ value.toFixed(2) }}
+                        </template>
+                        <template v-else-if="typeof value === 'string' && (key.includes('date') || key.includes('time'))">
+                          {{ formatDate(value) }}
+                        </template>
+                        <template v-else-if="typeof value === 'object'">
+                          <div v-for="(nestedValue, nestedKey) in value" :key="nestedKey" class="py-1">
+                            <span class="text-gray-600">{{ formatTitle(nestedKey) }}:</span> {{ nestedValue }}
+                          </div>
+                        </template>
+                        <template v-else>
+                          {{ value }}
+                        </template>
+                      </td>
+                    </tr>
+                  </template>
+                  <!-- Non-object values -->
+                  <tr v-else class="border-b border-gray-100">
+                    <td class="py-2 pr-4 text-sm font-medium text-gray-500 capitalize w-1/3">{{ formatTitle(categoryKey) }}</td>
+                    <td class="py-2 text-gray-900">{{ category }}</td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
           <!-- Content Preview -->
           <div class="space-y-4">
             <h4 class="font-medium text-sm text-gray-500 uppercase tracking-wider">Content Preview</h4>
@@ -131,6 +176,14 @@ const formatFileSize = (bytes) => {
     unitIndex++
   }
   return `${size.toFixed(1)} ${units[unitIndex]}`
+}
+
+const formatTitle = (text) => {
+  if (!text) return ''
+  return text
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
 }
 </script>
 
